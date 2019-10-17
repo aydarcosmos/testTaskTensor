@@ -19,8 +19,6 @@ def places(tag):
 places_div_start = places('<div')
 places_div_end = places('</div')
 tag_nums = len(places_div_start)
-print(places_div_start)
-print(places_div_end)
 list_of_div_pairs = []
 
 for j in places_div_end:
@@ -33,9 +31,11 @@ for j in places_div_end:
             places_div_start.remove(places_div_start[i])
             break
 
-print(tag_nums)
+#print(tag_nums)
 
 #print(list_of_div_pairs)
+
+ 
 articleBody = raw_page.find(r'itemprop="articleBody"')
 print()
 
@@ -45,10 +45,11 @@ for tag_pair in list_of_div_pairs:
         print(tag_pair)
         break
 
-#print(raw_page[needed_pair[0]:needed_pair[1]])
+print(raw_page[needed_pair[0]:needed_pair[1]]) # вот здесь выводится строка из нужного нам div - остается только распарсить p-шки
 
 place_p_start = places('<p')
 place_p_end = places('</p')
 
 print(place_p_start)
 print(place_p_end)
+

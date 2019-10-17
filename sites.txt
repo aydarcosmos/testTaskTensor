@@ -1,0 +1,11 @@
+https://russian.rt.com - no itemprop
+https://ria.ru/ - itemprop =  articleBody , but no <p>
+https://ufa.rbc.ru/ - our type
+https://lenta.ru/ - our type
+https://www.ufa.kp.ru/ - class="textContent", <p> is ok
+https://www.gazeta.ru/ - our type
+https://echo.msk.ru/ -our type
+https://tass.ru/ - no itemprop
+https://ufa.mk.ru/  -our type
+https://news.ru -our type
+
