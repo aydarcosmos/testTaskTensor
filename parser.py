@@ -4,15 +4,11 @@ from urllib.parse import urlparse
 
 class MiniReadability:
 
-    def __init__(self, url = 'https://www.mk.ru/social/2019/10/18/ukraina-priznala-nevozmozhnost-otsoedinitsya-ot-energosistemy-rossii.html'): 
+    def __init__(self, url = 'https://news.ru/cinema/sozdatel-samogo-kassovogo-anime-predstavit-v-rossii-novyj-film/'): 
         self.url = url
-        self.site_name = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url))
-       
-    def get_page(self):
-        page = urllib.request.urlopen(self.url).read().decode('utf8') 
-        return page
+        self.site_name = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(url))
+        self.page = urllib.request.urlopen(self.url).read().decode('utf8')
 
-    
     def get_tag_pairs(self, html_text, tag_for_search):
         #some algoritm which will return all text in needed TAG with FILTER. If FILTER = None, return text in all tag blocks 
         
@@ -83,6 +79,7 @@ class MiniReadability:
                 text_to_past = link_name + ' [' + link + ']'
                 input_text = input_text[:start] + text_to_past + input_text[end+len('</a>'):]
             return input_text
+
         text = format_links(text)
 
         def format_paragraphs(text):
@@ -90,14 +87,19 @@ class MiniReadability:
         
         return text
 
-    def get_useful_text(self):
-        page = self.get_page()
-        text_from_articleBody  = self.find_useful_text(page, 'div', filter = 'itemprop="articleBody"') # return needed div block
-        text_from_p = self.find_useful_text(''.join(text_from_articleBody), 'p') #return all news, but with <a> tags
-        text_with_formated_links = self.format_text(''.join(text_from_p))
-        return text_with_formated_links
+    def get_article_name(self):
+        title = self.find_useful_text(self.page, 'title')
+        return title
 
-    def save_to_txt(self, text):
+
+    def get_useful_text(self):
+        title = self.get_article_name()
+        self.page  = self.find_useful_text(self.page, 'div', filter = 'itemprop="articleBody"') # return needed div block
+        self.page = self.find_useful_text(''.join(self.page), 'p') #return all news, but with <a> tags
+        self.page = self.format_text(''.join(self.page))
+        return title[0] + self.page
+
+    def save_to_file(self, text):
         #check directories, if need create new one and save text.
         pass
         
