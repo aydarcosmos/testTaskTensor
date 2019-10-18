@@ -1,7 +1,13 @@
 import urllib.request
 
-url = 'https://lenta.ru/news/2019/10/16/shar_smerti/'
-raw_page = urllib.request.urlopen(url).read().decode('utf8')
+#url = 'https://lenta.ru/news/2019/10/16/shar_smerti/'
+url = 'https://www.gazeta.ru/social/news/2019/10/18/n_13592264.shtml' #- don't work
+#url = 'https://echo.msk.ru/news/2521677-echo.html'
+#url  = 'https://www.mk.ru/social/2019/10/18/ukraina-priznala-nevozmozhnost-otsoedinitsya-ot-energosistemy-rossii.html'
+#url = 'https://news.ru/cinema/sozdatel-samogo-kassovogo-anime-predstavit-v-rossii-novyj-film/'
+#url = 'https://www.rbc.ru/economics/18/10/2019/5da998fd9a7947940c5a7562'
+
+raw_page = urllib.request.urlopen(url).read().decode('utf8', errors='ignore')
 
 def find(html_text, tag='div', filter=None):
     #some algoritm which will return all text in needed TAG with FILTER. If FILTER = None, return text in all tag blocks
@@ -27,11 +33,14 @@ def find(html_text, tag='div', filter=None):
             if len(open_tags) == 2:
                 list_of_tag_pairs.append([open_tags[0], close_tag])
                 break
-            for i in range(tag_nums):
-                if close_tag > open_tags[i] and close_tag < open_tags[i+1]:
-                    list_of_tag_pairs.append([open_tags[i], close_tag])
-                    open_tags.remove(open_tags[i])
-                    break
+            try:
+                for i in range(tag_nums):
+                    if close_tag > open_tags[i] and close_tag < open_tags[i+1]:
+                        list_of_tag_pairs.append([open_tags[i], close_tag])
+                        open_tags.remove(open_tags[i])
+                        break
+            except IndexError:
+                pass
         return list_of_tag_pairs
 
     list_of_tag_pairs = combine_open_and_close_tags(all_open_tag_places, all_close_tag_places)      #get all pairs like <div> ... </div> 
@@ -50,6 +59,7 @@ def find(html_text, tag='div', filter=None):
     
     return text
 
-text = find(raw_page, 'div', 'itemprop="articleBody"')
-print(find(text, 'p'))
+
+text = find(raw_page, 'div', ' itemprop="articleBody"')
+print(text)
 
