@@ -1,18 +1,19 @@
 import sys
 import urllib.request 
 from urllib.parse import urlparse
+import re
 
 class MiniReadability:
 
-    def __init__(self, url = 'https://news.ru/cinema/sozdatel-samogo-kassovogo-anime-predstavit-v-rossii-novyj-film/'): 
+    def __init__(self, url = 'https://www.ufa.kp.ru/daily/27043/4108254/'): 
         self.url = url
         self.site_name = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(url))
         self.page = urllib.request.urlopen(self.url).read().decode('utf8')
 
-    def get_tag_pairs(self, html_text, tag_for_search):
+    def _get_tag_pairs(self, html_text, tag_for_search):
         #some algoritm which will return all text in needed TAG with FILTER. If FILTER = None, return text in all tag blocks 
         
-        def find_tag_places(tag):
+        def __find_tag_places(tag):
             start = 0
             tags = []
             while start != -1:
@@ -21,7 +22,7 @@ class MiniReadability:
                 start = tag_place
             return tags
 
-        def combine_open_and_close_tags(open_tags, close_tags):
+        def __combine_open_and_close_tags(open_tags, close_tags):
 
             tag_nums = len(open_tags)
             list_of_tag_pairs = []
@@ -42,14 +43,14 @@ class MiniReadability:
         open_tag = '<' + tag_for_search
         close_tag = '</' + tag_for_search + '>'  
 
-        all_open_tag_places = find_tag_places(open_tag)
-        all_close_tag_places = find_tag_places(close_tag)
+        all_open_tag_places = __find_tag_places(open_tag)
+        all_close_tag_places = __find_tag_places(close_tag)
 
-        list_of_tag_pairs = combine_open_and_close_tags(all_open_tag_places, all_close_tag_places)    #get all pairs like <div> ... </div> 
+        list_of_tag_pairs = __combine_open_and_close_tags(all_open_tag_places, all_close_tag_places)    #get all pairs like <div> ... </div> 
         return list_of_tag_pairs
         
-    def find_useful_text(self, html_text, tag, filter = None):
-        list_of_tag_pairs = self.get_tag_pairs(html_text, tag)
+    def _find_useful_text(self, html_text, tag, filter = None):
+        list_of_tag_pairs = self._get_tag_pairs(html_text, tag)
         list_of_text_blocks = []
         if filter==None:
             for tag_pair in list_of_tag_pairs:
@@ -67,7 +68,7 @@ class MiniReadability:
     def format_text(self, text):
         #change <a href='url'>url_name<>  to  url_name[url] and put \n beetween blocks
         def format_links(input_text):
-            number_of_a_tag_in_text = len(self.get_tag_pairs(text, 'a'))               
+            number_of_a_tag_in_text = len(self._get_tag_pairs(text, 'a'))               
             for _ in range(number_of_a_tag_in_text):    
                 start = input_text.find('<a') 
                 end = input_text.find('</a>')
@@ -82,22 +83,36 @@ class MiniReadability:
 
         text = format_links(text)
 
-        def format_paragraphs(text):
-            pass
+        def put_separators_instead_tag(text, tag):
+            re_exp = '<' + tag + '>'
+            cleanr = re.compile(re_exp)
+            text_with_separators = re.sub(cleanr, '\n\n   ', text)
+            return text_with_separators
+        text = put_separators_instead_tag(text, 'p')
+
+        def delete_tags(text):
+            cleanr = re.compile('<.*?>')
+            clean_text = re.sub(cleanr, '', text)
+            return clean_text
+        
+        text = delete_tags(text)        
         
         return text
 
-    def get_article_name(self):
-        title = self.find_useful_text(self.page, 'title')
+    def _get_article_name(self):
+        title = self._find_useful_text(self.page, 'title')
         return title
 
 
-    def get_useful_text(self):
-        title = self.get_article_name()
-        self.page  = self.find_useful_text(self.page, 'div', filter = 'itemprop="articleBody"') # return needed div block
-        self.page = self.find_useful_text(''.join(self.page), 'p') #return all news, but with <a> tags
-        self.page = self.format_text(''.join(self.page))
-        return title[0] + self.page
+    def get_significant_and_formated_text(self):
+        title = self._get_article_name()
+        if self.site_name == 'https://www.ufa.kp.ru':
+            self.page  = self._find_useful_text(self.page, 'div', filter = 'class="textContent"') # return needed div block
+        else:
+            self.page  = self._find_useful_text(self.page, 'div', filter = 'itemprop="articleBody"') # return needed div block
+        self.page = self._find_useful_text(''.join(self.page), 'p') #return all news, but with <a> tags
+        self.page = self.format_text(title[0] + ''.join(self.page))
+        return self.page
 
     def save_to_file(self, text):
         #check directories, if need create new one and save text.
@@ -106,8 +121,8 @@ class MiniReadability:
         
 def main():
     #url = sys.argv[1]
-    lenta_page = MiniReadability()
-    text = lenta_page.get_useful_text()
+    web_page = MiniReadability()
+    text = web_page.get_significant_and_formated_text()
     print(text)
     
     #lenta_page.save_to_txt()
