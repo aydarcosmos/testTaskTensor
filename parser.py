@@ -1,11 +1,11 @@
-import sys
+import sys, re, os
 import urllib.request 
 from urllib.parse import urlparse
-import re
+
 
 class MiniReadability:
 
-    def __init__(self, url = 'https://www.ufa.kp.ru/daily/27043/4108254/'): 
+    def __init__(self, url ): 
         self.url = url
         self.site_name = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(url))
         self.page = urllib.request.urlopen(self.url).read().decode('utf8')
@@ -86,16 +86,18 @@ class MiniReadability:
         def put_separators_instead_tag(text, tag):
             re_exp = '<' + tag + '>'
             cleanr = re.compile(re_exp)
-            text_with_separators = re.sub(cleanr, '\n\n   ', text)
+            text_with_separators = re.sub(cleanr, '\n\n', text)
             return text_with_separators
         text = put_separators_instead_tag(text, 'p')
 
-        def delete_tags(text):
+        def delete_tags_and_special_symbols(text):
             cleanr = re.compile('<.*?>')
-            clean_text = re.sub(cleanr, '', text)
+            text_without_tags = re.sub(cleanr, '', text)
+            cleanr = re.compile('&.*?;')
+            clean_text = re.sub(cleanr, '', text_without_tags)
             return clean_text
         
-        text = delete_tags(text)        
+        text = delete_tags_and_special_symbols(text)        
         
         return text
 
@@ -114,18 +116,49 @@ class MiniReadability:
         self.page = self.format_text(title[0] + ''.join(self.page))
         return self.page
 
-    def save_to_file(self, text):
-        #check directories, if need create new one and save text.
-        pass
+    @classmethod
+    def save_to_file(cls, text, url):
+        def split_text_to_readable_format(text, maxlen):
+            output_text = ''  
+            
+            for paragrath in text.split('\n\n'): 
+                output_line = ''
+                c = 0
+                for i in paragrath.split():  
+                    c += len(i)  
+                    if c > maxlen:  
+                        output_line += '\n'  
+                        c = len(i) 
+                    elif output_line != '':  
+                        output_line += ' ' 
+                        c += 1  
+                    output_line += i
+                output_text += output_line + '\n\n'
+
+            return output_text 
+
+        text = split_text_to_readable_format(text, 80)
+
+        def create_dir(url):
+            directory_name = url.split('/')[3] #директорий сразу после имени сайта самое информативное. Решил взять только его
+            absolute_path = os.path.dirname(__file__)
+            site = urlparse(url).netloc
+            path_for_creating =  os.path.join(absolute_path, site, directory_name)
+            if not os.path.exists(path_for_creating):
+                os.makedirs(path_for_creating)
+            return path_for_creating
         
+        path_to_file = os.path.join(create_dir(url), 'file.txt')
+        file = open(path_to_file, 'w')
+        file.write(text)
+        file.close()
+               
         
 def main():
-    #url = sys.argv[1]
-    web_page = MiniReadability()
-    text = web_page.get_significant_and_formated_text()
-    print(text)
+    url = sys.argv[1]
+    web_page = MiniReadability(url)
+    clean_text = web_page.get_significant_and_formated_text()
+    MiniReadability.save_to_file(clean_text, url)
     
-    #lenta_page.save_to_txt()
-
 if __name__ == '__main__':
     main()
