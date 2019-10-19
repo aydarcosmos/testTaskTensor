@@ -148,7 +148,8 @@ class MiniReadability:
                 os.makedirs(path_for_creating)
             return path_for_creating
         
-        path_to_file = os.path.join(create_dir(url), 'file.txt')
+        file_name = text[0:text.find(' ', 30)].replace(' ', '_') + '.txt'
+        path_to_file = os.path.join(create_dir(url), file_name)
         file = open(path_to_file, 'w')
         file.write(text)
         file.close()
